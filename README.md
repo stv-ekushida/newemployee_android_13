@@ -66,3 +66,77 @@ class SoundManageService : Service() {
         val intent = Intent(applicationContext, SoundManageService::class.java)
         stopService(intent)
 ```
+
+## 通知
+
+### ①通知チャネルを作成する
+
+```
+       //①通知チャネルの作成、Managerに登録
+        val id = "soundmanagerservice_notification_channel"
+        val name = getString(R.string.notification_channel_name)
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel(id, name, importance)
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.createNotificationChannel(channel)
+```
+
+### ②通知を表示する
+
+```
+        //②通知を表示する　(Builder + Manager)
+        val builder = NotificationCompat.Builder(applicationContext,
+            "soundmanagerservice_notification_channel")
+        builder.setSmallIcon(android.R.drawable.ic_dialog_info)
+        builder.setContentText(getString(R.string.msg_notification_text_finish))
+
+        val notification = builder.build()
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(0, notification)
+```            
+
+## 通知からActivityを起動する場合
+### PendingIntentを利用する
+
+```
+        val builder = NotificationCompat.Builder(applicationContext,
+            "soundmanagerservice_notification_channel")
+        builder.setSmallIcon(android.R.drawable.ic_dialog_info)
+        builder.setContentTitle(getString(R.string.msg_notification_title_start))
+
+        val intent = Intent(applicationContext, MainActivity::class.java)
+        intent.putExtra("fromNotification", true)
+
+        val stopServiceIntent = PendingIntent.getActivity(applicationContext,
+            0, intent, PendingIntent.FLAG_CANCEL_CURRENT)
+        builder.setContentIntent(stopServiceIntent)
+        builder.setAutoCancel(true)
+
+        val notification = builder.build()
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(1, notification)     
+```        
+
+### Activity起動時の処理
+
+```
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        //通知から起動したときの処理
+        val fromNotification = intent.getBooleanExtra("fromNotification", false)
+
+        if(fromNotification) {
+            val btPlay = findViewById<Button>(R.id.btPlay)
+            val btStop = findViewById<Button>(R.id.btStop)
+            btPlay.isEnabled = false
+            btStop.isEnabled = true
+        }
+    }
+```    
+
+
+
+
+
